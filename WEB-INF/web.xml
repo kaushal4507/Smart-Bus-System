@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee
+         https://jakarta.ee/xml/ns/jakartaee/web-app_5_0.xsd"
+         version="5.0">
+
+    <display-name>College Bus Booking App</display-name>
+
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+    </welcome-file-list>
+
+    <servlet>
+        <servlet-name>AuthServlet</servlet-name>
+        <servlet-class>AuthServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>AuthServlet</servlet-name>
+        <url-pattern>/api/auth/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>RouteServlet</servlet-name>
+        <servlet-class>RouteServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>RouteServlet</servlet-name>
+        <url-pattern>/api/routes</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>BookingServlet</servlet-name>
+        <servlet-class>BookingServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>BookingServlet</servlet-name>
+        <url-pattern>/api/bookings</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>MyBookingsServlet</servlet-name>
+        <servlet-class>MyBookingsServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>MyBookingsServlet</servlet-name>
+        <url-pattern>/api/my-bookings</url-pattern>
+    </servlet-mapping>
+
+    <session-config>
+        <session-timeout>30</session-timeout>
+    </session-config>
+
+</web-app>

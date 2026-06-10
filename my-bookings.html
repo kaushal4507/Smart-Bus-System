@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusBus — My Bookings</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">CAMPUS<span>BUS</span></a>
+  <div class="nav-links">
+    <a href="booking.html">Book</a>
+    <a href="my-bookings.html" class="active">My Bookings</a>
+    <button id="logoutBtn" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="page-header">
+    <h1>MY <em>BOOKINGS</em></h1>
+    <p id="userGreeting">// Loading…</p>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card">
+      <div class="stat-label">Total Bookings</div>
+      <div class="stat-value" id="statTotal">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Confirmed</div>
+      <div class="stat-value" id="statConfirmed" style="color:var(--green)">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cancelled</div>
+      <div class="stat-value" id="statCancelled" style="color:var(--red)">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Spent</div>
+      <div class="stat-value" id="statSpent" style="font-size:1.6rem">—</div>
+    </div>
+  </div>
+
+  <div id="myAlert" class="alert"></div>
+
+  <!-- BOOKINGS TABLE -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="table-wrap" id="tableWrap">
+      <div style="padding:2rem"><div class="spinner"></div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+  // ── Auth guard ────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res  = await fetch('/bus/api/auth/me', { credentials: 'same-origin' });
+      const user = await res.json();
+      if (!user.id) { location.href = 'login.html'; return; }
+      document.getElementById('userGreeting').textContent =
+        `// ${user.name} · Roll: ${user.rollNo}`;
+    } catch {
+      location.href = 'login.html';
+      return;
+    }
+    loadBookings();
+  });
+
+  // ── Load bookings ─────────────────────────────────────────────────
+  async function loadBookings() {
+    try {
+      const res  = await fetch('/bus/api/my-bookings', { credentials: 'same-origin' });
+      const data = await res.json();
+
+      if (!res.ok) { showAlert('error', data.error || 'Failed to load.'); return; }
+
+      renderStats(data);
+      renderTable(data);
+    } catch {
+      showAlert('error', 'Network error. Please try again.');
+      document.getElementById('tableWrap').innerHTML = '';
+    }
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────────
+  function renderStats(bookings) {
+    const confirmed = bookings.filter(b => b.status === 'CONFIRMED');
+    const cancelled = bookings.filter(b => b.status === 'CANCELLED');
+    const spent     = confirmed.reduce((sum, b) => sum + parseFloat(b.fare), 0);
+
+    document.getElementById('statTotal').textContent     = bookings.length;
+    document.getElementById('statConfirmed').textContent = confirmed.length;
+    document.getElementById('statCancelled').textContent = cancelled.length;
+    document.getElementById('statSpent').textContent     = `₹${spent.toFixed(0)}`;
+  }
+
+  // ── Table ─────────────────────────────────────────────────────────
+  function renderTable(bookings) {
+    if (!bookings.length) {
+      document.getElementById('tableWrap').innerHTML = `
+        <div class="empty-state">
+          <div class="icon">🎫</div>
+          <h3>NO BOOKINGS YET</h3>
+          <p>You haven't booked any seats.</p>
+          <a href="booking.html" class="btn btn-primary">Book a Seat</a>
+        </div>`;
+      return;
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const rows = bookings.map(b => {
+      const isPast      = b.travelDate < today;
+      const isCancelled = b.status === 'CANCELLED';
+      const canCancel   = !isCancelled && b.travelDate >= today;
+
+      const badge = isCancelled
+        ? `<span class="badge badge-cancelled">Cancelled</span>`
+        : `<span class="badge badge-confirmed">Confirmed</span>`;
+
+      const cancelBtn = canCancel
+        ? `<button class="btn btn-danger" style="padding:5px 12px;font-size:0.7rem"
+             onclick="cancelBooking(${b.bookingId}, this)">Cancel</button>`
+        : `<span style="color:var(--text-muted);font-family:var(--font-mono);font-size:0.75rem">
+             ${isPast ? 'Completed' : '—'}
+           </span>`;
+
+      return `
+        <tr>
+          <td><span style="color:var(--text-muted);font-size:0.75rem">#</span>${b.bookingId}</td>
+          <td>
+            <div style="color:var(--text)">${escHtml(b.routeName)}</div>
+            <div class="booking-meta">${escHtml(b.origin)} → ${escHtml(b.destination)}</div>
+          </td>
+          <td>${formatDate(b.travelDate)}<div class="booking-meta">${formatTime(b.departure)}</div></td>
+          <td><strong style="color:var(--amber)">Seat ${b.seatNo}</strong></td>
+          <td>₹${Number(b.fare).toFixed(2)}</td>
+          <td>${badge}</td>
+          <td>${cancelBtn}</td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('tableWrap').innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Route</th>
+            <th>Date</th>
+            <th>Seat</th>
+            <th>Fare</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  // ── Cancel booking ────────────────────────────────────────────────
+  async function cancelBooking(bookingId, btn) {
+    if (!confirm(`Cancel booking #${bookingId}? This cannot be undone.`)) return;
+
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+      const res  = await fetch(`/bus/api/bookings?bookingId=${bookingId}`, {
+        method: 'DELETE',
+        credentials: 'same-origin'
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showAlert('success', `Booking #${bookingId} cancelled.`);
+        loadBookings(); // Reload
+      } else {
+        showAlert('error', data.error || 'Cancellation failed.');
+        btn.disabled = false;
+        btn.textContent = 'Cancel';
+      }
+    } catch {
+      showAlert('error', 'Network error.');
+      btn.disabled = false;
+      btn.textContent = 'Cancel';
+    }
+  }
+
+  // ── Logout ────────────────────────────────────────────────────────
+  async function logout() {
+    await fetch('/bus/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    location.href = 'login.html';
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────
+  function showAlert(type, msg) {
+    const el = document.getElementById('myAlert');
+    el.className = `alert alert-${type} show`;
+    el.textContent = msg;
+    if (type === 'success') setTimeout(() => el.classList.remove('show'), 4000);
+  }
+
+  function formatDate(d) {
+    if (!d) return '—';
+    const [y, m, day] = d.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${day} ${months[+m - 1]} ${y}`;
+  }
+
+  function formatTime(t) {
+    if (!t) return '—';
+    const [h, m] = t.split(':');
+    const hour = parseInt(h);
+    return `${hour % 12 || 12}:${m} ${hour < 12 ? 'AM' : 'PM'}`;
+  }
+
+  function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+</script>
+
+</body>
+</html>

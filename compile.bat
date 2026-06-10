@@ -1,0 +1,1 @@
+"C:\Program Files\Java\jdk-21.0.11\bin\javac" -cp "WEB-INF\lib\*;C:\Program Files\Apache Software Foundation\Tomcat 11.0\lib\servlet-api.jar" -source 17 -target 17 -d WEB-INF\classes WEB-INF\classes\*.java 

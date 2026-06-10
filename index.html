@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusBus — College Transport System</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<div class="hero">
+  <div>
+    <p class="hero-sub">// Student Transport System</p>
+    <h1 class="hero-title">
+      CAMPUS
+      <em>BUS</em>
+    </h1>
+    <p class="hero-sub">Book. Track. Ride.</p>
+
+    <div id="heroActions" class="hero-actions">
+      <!-- Rendered by JS based on session -->
+    </div>
+  </div>
+</div>
+
+<script>
+  // Check if user is already logged in
+  fetch('/bus/bus/api/auth/me', { credentials: 'same-origin' })
+    .then(r => r.json())
+    .then(data => {
+      const actions = document.getElementById('heroActions');
+      if (data.id) {
+        actions.innerHTML = `
+          <a href="booking.html" class="btn btn-primary">Book a Seat</a>
+          <a href="my-bookings.html" class="btn btn-secondary">My Bookings</a>
+        `;
+      } else {
+        actions.innerHTML = `
+          <a href="login.html" class="btn btn-primary">Login</a>
+          <a href="login.html#signup" class="btn btn-secondary">Sign Up</a>
+        `;
+      }
+    })
+    .catch(() => {
+      document.getElementById('heroActions').innerHTML = `
+        <a href="login.html" class="btn btn-primary">Login</a>
+        <a href="login.html#signup" class="btn btn-secondary">Sign Up</a>
+      `;
+    });
+</script>
+
+</body>
+</html>

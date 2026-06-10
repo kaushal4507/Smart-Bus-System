@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusBus — Book a Seat</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">CAMPUS<span>BUS</span></a>
+  <div class="nav-links">
+    <a href="booking.html" class="active">Book</a>
+    <a href="my-bookings.html">My Bookings</a>
+    <button id="logoutBtn" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="page-header">
+    <h1>BOOK A <em>SEAT</em></h1>
+    <p id="userGreeting">// Loading…</p>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar">
+    <div class="form-group">
+      <label for="travelDate">Travel Date</label>
+      <input type="date" id="travelDate"/>
+    </div>
+    <button class="btn btn-primary" onclick="loadRoutes()">Search Routes</button>
+  </div>
+
+  <div id="bookingAlert" class="alert"></div>
+
+  <!-- ROUTES GRID -->
+  <div id="routesContainer">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- SEAT MAP (hidden until route selected) -->
+  <section class="seat-map-section" id="seatMapSection" style="display:none">
+    <h2 id="seatMapTitle">SELECT YOUR SEAT</h2>
+
+    <div class="seat-legend">
+      <div class="seat-legend-item">
+        <div class="seat-legend-dot" style="background:rgba(61,220,132,0.3);border:2px solid var(--green)"></div>
+        Available
+      </div>
+      <div class="seat-legend-item">
+        <div class="seat-legend-dot" style="background:rgba(245,166,35,0.2);border:2px solid var(--amber)"></div>
+        Selected
+      </div>
+      <div class="seat-legend-item">
+        <div class="seat-legend-dot" style="background:rgba(255,79,94,0.2);border:2px solid var(--red)"></div>
+        Booked
+      </div>
+      <div class="seat-legend-item">
+        <div class="seat-legend-dot" style="background:rgba(79,163,247,0.2);border:2px solid var(--blue)"></div>
+        Your Seat
+      </div>
+    </div>
+
+    <div id="seatGrid" class="seat-grid"></div>
+
+    <div class="confirm-row">
+      <div class="selected-info" id="selectedInfo">No seat selected</div>
+      <button class="btn btn-primary" id="confirmBtn" onclick="confirmBooking()" disabled>
+        Confirm Booking
+      </button>
+    </div>
+  </section>
+</main>
+
+<script src="js/booking.js"></script>
+</body>
+</html>

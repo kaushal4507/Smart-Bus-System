@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CampusBus — Login</title>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .tab-bar {
+      display: flex;
+      gap: 0;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      margin-bottom: -1px;
+    }
+    .tab-btn.active { color: var(--amber); border-bottom-color: var(--amber); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-box">
+    <div class="auth-logo">CAMPUS<span>BUS</span></div>
+    <p class="auth-sub">Student Transport System</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="login">Login</button>
+      <button class="tab-btn"       data-tab="signup">Sign Up</button>
+    </div>
+
+    <!-- LOGIN PANEL -->
+    <div class="tab-panel active" id="panel-login">
+      <div id="loginAlert" class="alert"></div>
+
+      <div class="form-group">
+        <label for="loginEmail">Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@college.edu" autocomplete="email"/>
+      </div>
+
+      <div class="form-group">
+        <label for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+
+      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()" style="width:100%">
+        Login
+      </button>
+    </div>
+
+    <!-- SIGNUP PANEL -->
+    <div class="tab-panel" id="panel-signup">
+      <div id="signupAlert" class="alert"></div>
+
+      <div class="form-group">
+        <label for="signupName">Full Name</label>
+        <input type="text" id="signupName" placeholder="Your full name"/>
+      </div>
+
+      <div class="form-group">
+        <label for="signupRoll">Roll Number</label>
+        <input type="text" id="signupRoll" placeholder="e.g. 21CS047" style="text-transform:uppercase"/>
+      </div>
+
+      <div class="form-group">
+        <label for="signupEmail">Email Address</label>
+        <input type="email" id="signupEmail" placeholder="you@college.edu"/>
+      </div>
+
+      <div class="form-group">
+        <label for="signupPassword">Password <span style="color:var(--text-muted)">(min. 6 chars)</span></label>
+        <input type="password" id="signupPassword" placeholder="Choose a strong password"/>
+      </div>
+
+      <button class="btn btn-primary" id="signupBtn" onclick="doSignup()" style="width:100%">
+        Create Account
+      </button>
+    </div>
+
+    <p class="auth-switch" style="margin-top:1.5rem">
+      <a href="index.html">← Back to home</a>
+    </p>
+  </div>
+</div>
+
+<script>
+  // ── Tab switching ────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn, .tab-panel').forEach(el => el.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // Auto-switch to signup if URL has #signup
+  if (location.hash === '#signup') {
+    document.querySelector('[data-tab="signup"]').click();
+  }
+
+  // ── Enter key support ─────────────────────────────────────────────
+  document.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const panel = inp.closest('.tab-panel').id;
+        if (panel === 'panel-login') doLogin();
+        else doSignup();
+      }
+    });
+  });
+
+  // ── Alert helper ──────────────────────────────────────────────────
+  function showAlert(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = `alert alert-${type} show`;
+    el.textContent = msg;
+  }
+
+  // ── Login ──────────────────────────────────────────────────────────
+  async function doLogin() {
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+
+    if (!email || !password) { showAlert('loginAlert', 'error', 'Please fill in all fields.'); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Logging in…';
+
+    try {
+      const res = await fetch('/bus/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'same-origin'
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showAlert('loginAlert', 'success', `Welcome back, ${data.name}!`);
+        setTimeout(() => location.href = 'booking.html', 600);
+      } else {
+        showAlert('loginAlert', 'error', data.error || 'Login failed.');
+      }
+    } catch {
+      showAlert('loginAlert', 'error', 'Network error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Login';
+    }
+  }
+
+  // ── Sign Up ────────────────────────────────────────────────────────
+  async function doSignup() {
+    const name     = document.getElementById('signupName').value.trim();
+    const rollNo   = document.getElementById('signupRoll').value.trim().toUpperCase();
+    const email    = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const btn      = document.getElementById('signupBtn');
+
+    if (!name || !rollNo || !email || !password) {
+      showAlert('signupAlert', 'error', 'Please fill in all fields.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+
+    try {
+     const res = await fetch('/bus/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, rollNo, email, password }),
+        credentials: 'same-origin'
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        showAlert('signupAlert', 'success', 'Account created! Redirecting…');
+        setTimeout(() => location.href = 'booking.html', 800);
+      } else {
+        showAlert('signupAlert', 'error', data.error || 'Signup failed.');
+      }
+    } catch {
+      showAlert('signupAlert', 'error', 'Network error. Please try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  }
+</script>
+
+</body>
+</html>
